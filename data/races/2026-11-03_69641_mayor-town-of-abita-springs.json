@@ -1,0 +1,20 @@
+{
+  "id": "69641",
+  "date": "2026-11-03",
+  "title": "Mayor, Town of Abita Springs",
+  "multi": 0,
+  "choices": [
+    {"id": "124987", "name": "Stephen Duncan Saussy, Jr.", "party": "REP"},
+    {"id": "127574", "name": "Sandra Slifer", "party": "NOPTY"}
+  ],
+  "_columns": ["registered", "voted", "Stephen Duncan Saussy, Jr.", "Sandra Slifer"],
+  "unalloc": [
+    ["Early voting", [334, 337]]
+  ],
+  "precincts": {
+    "T:A01": [284, 0, 48, 43],
+    "T:A02": [1205, 0, 155, 213],
+    "T:A03": [122, 0, 14, 15],
+    "T:A04": [553, 0, 91, 79]
+  }
+}

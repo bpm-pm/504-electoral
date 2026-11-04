@@ -1,0 +1,95 @@
+{
+  "races": "races/index.json",
+  "parts": [
+    {
+      "key": "dist",
+      "file": "geography/precinct-districts.json",
+      "kind": "json"
+    },
+    {
+      "key": "sbInferred",
+      "file": "geography/school-board-inferred-precincts.json",
+      "kind": "json"
+    },
+    {
+      "key": "shapes",
+      "file": "geography/orleans-precincts.txt",
+      "kind": "lines",
+      "sep": "\n"
+    },
+    {
+      "key": "metro",
+      "file": "geography/metro-precincts.txt",
+      "kind": "lines",
+      "sep": "\n"
+    },
+    {
+      "key": "psplit",
+      "file": "geography/orleans-precinct-tract-zip.txt",
+      "kind": "lines",
+      "sep": ";"
+    },
+    {
+      "key": "mpsplit",
+      "file": "geography/metro-precinct-tract-zip.txt",
+      "kind": "lines",
+      "sep": ";"
+    },
+    {
+      "key": "reg",
+      "file": "registration.csv",
+      "kind": "csv",
+      "sep": ";"
+    },
+    {
+      "key": "demo.rows",
+      "file": "demographics/acs-tracts.csv",
+      "kind": "csv",
+      "sep": ";"
+    },
+    {
+      "key": "demo.tracts",
+      "file": "demographics/orleans-tract-shapes.txt",
+      "kind": "lines",
+      "sep": "\n"
+    },
+    {
+      "key": "demo.mtracts",
+      "file": "demographics/metro-tract-shapes.txt",
+      "kind": "lines",
+      "sep": "\n"
+    },
+    {
+      "key": "demo.split",
+      "file": "demographics/tract-district-split.txt",
+      "kind": "lines",
+      "sep": ";"
+    },
+    {
+      "key": "members.asOf",
+      "value": "2026-10-22"
+    },
+    {
+      "key": "members.counts",
+      "file": "members/counts-by-zip.json",
+      "kind": "json"
+    },
+    {
+      "key": "members.shapes",
+      "file": "members/zip-shapes.txt",
+      "kind": "lines",
+      "sep": "\n"
+    },
+    {
+      "key": "juris.data",
+      "file": "upcoming/districts.json",
+      "kind": "json"
+    },
+    {
+      "key": "juris.shapes",
+      "file": "upcoming/district-shapes.txt",
+      "kind": "lines",
+      "sep": "\n"
+    }
+  ]
+}

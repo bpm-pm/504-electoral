@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>New Orleans DSA Electoral Analyses</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="star" viewBox="0 0 24 24"><path d="M12 1.8l3.1 6.9 7.5.8-5.6 5.1 1.6 7.4L12 18.2 5.4 22l1.6-7.4L1.4 9.5l7.5-.8z"/></symbol>
+</svg>
+
+<div class="topbar">
+  <button type="button" class="hamb" id="navBtn" aria-label="Open navigation" aria-expanded="false" aria-controls="navPanel">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <div class="crumb" id="crumb"><b>Election Data</b></div>
+</div>
+<div class="navback" id="navBack" hidden></div>
+<nav class="navpanel" id="navPanel" aria-label="Analyses">
+  <div class="navhead"><p class="eyebrow">Analyses</p><button type="button" class="navclose" id="navClose" aria-label="Close navigation">×</button></div>
+  <div id="navList"></div>
+  <p class="navnote">More analyses will appear here as other data is added.</p>
+</nav>
+<div class="app" id="view-election" data-view="election">
+  <div class="rail">
+    <header>
+      <h1>New Orleans DSA Electoral Analyses</h1>
+      <p>New Orleans metro, precinct by precinct</p>
+      <p class="keyline"><svg class="star"><use href="#star"/></svg> DSA endorsed · no star: recommended</p>
+      <div class="tabs" role="tablist" aria-label="View">
+        <button type="button" role="tab" id="tab-prev" aria-controls="prevView" aria-selected="true">Previous elections</button>
+        <button type="button" role="tab" id="tab-up" aria-controls="upView" aria-selected="false">Upcoming elections</button>
+        <button type="button" role="tab" id="tab-trends" aria-controls="trendsView" aria-selected="false">Trends &amp; data</button>
+      </div>
+    </header>
+
+    <div class="view" id="prevView" role="tabpanel" aria-labelledby="tab-prev">
+
+
+    <section class="block" aria-label="Summary">
+      <p class="eyebrow">Result</p>
+      <p class="race-line" id="raceLine"></p>
+      <div class="stats">
+        <div class="stat"><div class="v" id="sVotes">–</div><div class="k">Votes</div></div>
+        <div class="stat"><div class="v" id="sPct">–</div><div class="k">Share</div></div>
+        <div class="stat"><div class="v" id="sWon">–</div><div class="k">Precincts won</div></div>
+      </div>
+      <table class="vtype" id="vtype"></table>
+      <div class="cmpsum" id="cmpSum" hidden></div>
+      <p class="note" id="earlyNote"></p>
+    </section>
+
+
+    <section class="block detail" aria-live="polite" id="detail"></section>
+
+    <section class="block top">
+      <p class="eyebrow" id="topTitle">Strongest precincts</p>
+      <ol id="topList"></ol>
+    </section>
+    </div>
+
+    <div class="view" id="upView" role="tabpanel" aria-labelledby="tab-up" hidden>
+
+      <section class="block" aria-label="District summary">
+        <p class="eyebrow">Past performance in this district</p>
+        <p class="race-line" id="upLine"></p>
+        <div class="grpcards" id="upCards"></div>
+        <div id="upWarn"></div>
+      </section>
+
+
+      <section class="block detail" aria-live="polite" id="upDetail"></section>
+
+      <section class="block">
+        <p class="eyebrow">Candidates on past ballots in this district</p>
+        <div class="tblwrap" id="upTable"></div>
+      </section>
+    </div>
+
+    <div class="view" id="trendsView" role="tabpanel" aria-labelledby="tab-trends" hidden>
+      <section class="block">
+        <p class="eyebrow">What stands out</p>
+        <div id="trSummary"></div>
+      </section>
+      <section class="block" aria-label="Strongest districts">
+        <p class="eyebrow">Strongest upcoming districts</p>
+        <div class="seg" role="group" aria-label="Candidates" style="margin:0 0 10px">
+          <button type="button" id="dg-dsa" aria-pressed="true">DSA</button>
+          <button type="button" id="dg-all" aria-pressed="false">DSA + Recommended</button>
+        </div>
+        <div id="distRank"></div>
+        <p class="note">District score is the average of its precincts' scores. Click a district to open it in Upcoming elections.</p>
+      </section>
+      <section class="block">
+        <p class="eyebrow">How precincts are scored</p>
+        <p class="note" style="margin:0">Each candidate's share in a precinct is compared with that candidate's own average across every precinct in their race, so a +5 pts precinct beat the candidate's usual result by 5 points. A precinct's score is the average of those gaps across every listed candidate who was on its ballot. Raw shares aren't comparable across races (a 3-way council race and a 2-way runoff differ), which is why the ranking uses the gap rather than the share.</p>
+        <p class="note">Avg share and avg votes are per candidate in that precinct. Election-day votes only; early votes have no precinct.</p>
+      </section>
+    </div>
+
+    <footer>
+      Boundaries: City of New Orleans GIS, <a href="https://maps.nola.gov/server/rest/services/Administrative/Election_Administration/MapServer/0" target="_blank" rel="noopener">Voting Precincts</a> (349 current precincts).
+      Results: Louisiana Secretary of State, <a href="https://voterportal.sos.la.gov/" target="_blank" rel="noopener">Voter Portal</a>, official precinct returns. Results from 2022–2024 are drawn on today's precinct boundaries.
+      Districts: precinct lists from the most recent SOS races for each district (House districts 2024–2026, Council 2025, Congress 2026, School Board 2024, with districts 1, 3, 5, 6 and 7 rebuilt from the 2020 races and so approximate).
+    </footer>
+  </div>
+
+  <div class="main fixed" id="elMain">
+    <section class="block ctrl pickblock" id="prevControls" aria-label="Candidate">
+      <div class="ctrl-main"><p class="eyebrow" id="pickLabel">Candidate</p>
+      <div class="picker">
+        <button type="button" class="pick-btn" id="pickBtn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="pickLabel pickBtn"></button>
+        <ul class="pick-list" id="pickList" role="listbox" tabindex="-1" aria-labelledby="pickLabel" hidden></ul>
+      </div></div>
+      <div class="ctrl-side"><p class="eyebrow">Color by</p><div class="seg" role="group" aria-label="Color by">
+        <button type="button" id="m-pct" aria-pressed="true">Vote share %</button>
+        <button type="button" id="m-votes" aria-pressed="false">Total votes</button>
+      </div></div>
+      <div class="cmp ctrl-full">
+        <p class="eyebrow">Compare with</p>
+        <div class="chips" id="cmpChips" role="group" aria-label="Compare with another listed candidate"></div>
+      </div>
+    </section>
+      <section class="block ctrl upblock" id="upControls" hidden aria-label="Upcoming election">
+        <div class="ctrl-main"><label class="eyebrow" for="upElection" style="display:block">Election</label>
+        <select class="up-sel" id="upElection"></select></div>
+        <div class="ctrl-side"><p class="eyebrow">Color by</p><div class="seg" role="group" aria-label="Color the map by">
+          <button type="button" id="g-dsa" aria-pressed="true">DSA candidates</button>
+          <button type="button" id="g-rec" aria-pressed="false">DSA + Recommended</button>
+        </div></div>
+        <div class="ctrl-full" id="upWeightRow" hidden><p class="eyebrow" title="DSCC is a Democratic party race, so all-Democrat races say the most about how a candidate would do">Past races count</p><div class="seg" role="group" aria-label="How past races count" style="max-width:520px">
+          <button type="button" data-dw="1" aria-pressed="true" title="D v D ×1, Mixed ×½, D v R ×¼, measures ×¼">Weighted: Democratic primaries count most</button>
+          <button type="button" data-dw="0" aria-pressed="false">Every race counts the same</button>
+        </div></div>
+        <div class="ctrl-full"><p class="eyebrow">District</p>
+        <div class="chips" id="upDistricts" role="group" aria-label="District"></div></div>
+      </section>
+    <section class="block ctrl" id="trendsControls" hidden aria-label="Table filters">
+      <div class="ctrl-main"><label class="eyebrow" for="trType" style="display:block">Filter by upcoming district</label>
+        <select class="up-sel" id="trType">
+          <option value="">All precincts (four parishes)</option>
+          <option value="p">Parish</option>
+          <option value="h">State House / DSCC district</option>
+          <option value="s">School Board district</option>
+          <option value="g">Congressional district</option>
+          <option value="c">City Council district</option>
+        </select></div>
+      <div class="ctrl-side"><label class="eyebrow" for="trDist" style="display:block">District</label>
+        <select class="up-sel" id="trDist" style="min-width:200px" disabled><option value="">All</option></select></div>
+    </section>
+    <section class="block trmain" id="trendsMain" hidden>
+      <div class="trhead"><div><h2 class="trh"><svg class="star big" aria-hidden="true"><use href="#star"/></svg> Highest-performing precincts for DSA candidates</h2><p class="trsub" id="trSubD"></p></div><button type="button" class="copybtn" data-t="dsa">Copy as CSV</button></div>
+      <div class="tblwrap" id="trDsa"></div><div class="pager" id="pgDsa"></div>
+      <div class="trhead" style="margin-top:22px"><div><h2 class="trh">Highest-performing precincts for DSA and recommended candidates</h2><p class="trsub" id="trSubA"></p></div><button type="button" class="copybtn" data-t="all">Copy as CSV</button></div>
+      <div class="tblwrap" id="trAll"></div><div class="pager" id="pgAll"></div>
+      <textarea id="trCsv" class="csvbox" readonly hidden aria-label="CSV text"></textarea>
+    </section>
+  <div class="mapwrap">
+    <svg id="map" role="img" aria-label="Map of Orleans Parish precincts colored by result"></svg>
+    <div class="maptitle"><div><div class="t" id="mtT"></div><div class="s" id="mtS"></div></div></div>
+    <div class="zoombar">
+      <button type="button" id="zin" aria-label="Zoom in">+</button>
+      <button type="button" id="zout" aria-label="Zoom out">−</button>
+      <button type="button" id="zfit" aria-label="Fit to selected race">⤢</button>
+    </div>
+    <div class="maplegend legend" id="prevLegend" aria-label="Legend">
+      <p class="eyebrow" id="legTitle">Vote share</p>
+      <svg id="legend" height="44"></svg>
+      <div class="ends" id="legEnds" hidden></div>
+      <div class="nodata"><span class="swatch"></span><span id="nodataTxt">Precinct not in this race</span></div>
+    </div>
+    <div class="maplegend legend" id="upLegendBox" aria-label="Legend" hidden>
+      <p class="eyebrow" id="upLegTitle">Precinct performance</p>
+      <svg id="upLegend" height="44"></svg>
+      <div class="ends" id="upLegEnds"></div>
+      <div class="nodata"><span class="swatch"></span><span id="upNodata">Outside the district</span></div>
+    </div>
+    <div class="tip" id="tip" hidden></div>
+  </div>
+  </div>
+</div>
+
+<div class="app" id="view-membership" data-view="membership" hidden>
+  <div class="rail">
+    <header>
+      <h1>Membership</h1>
+      <p>Member list of Oct. 22, 2026</p>
+      <div class="tabs" role="tablist" aria-label="Membership view">
+        <button type="button" role="tab" id="mtab-zip" aria-controls="zipRail" aria-selected="true">ZIP</button>
+        <button type="button" role="tab" id="mtab-jur" aria-controls="jurRail" aria-selected="false">Jurisdictions</button>
+      </div>
+    </header>
+    <div class="view" id="zipRail" role="tabpanel" aria-labelledby="mtab-zip">
+    <section class="block" aria-label="Membership totals">
+      <p class="eyebrow">Totals</p>
+      <div class="stats">
+        <div class="stat"><div class="v" id="memMigs">–</div><div class="k">In good standing</div></div>
+        <div class="stat"><div class="v" id="memLapsed">–</div><div class="k">Lapsed</div></div>
+        <div class="stat"><div class="v" id="memTotal">–</div><div class="k">MIGS + Lapsed</div></div>
+      </div>
+      <p class="note" id="memNote"></p>
+    </section>
+    <section class="block detail" aria-live="polite" id="memDetail"></section>
+    <section class="block top">
+      <p class="eyebrow" id="memTopTitle">Top ZIP codes</p>
+      <div class="tblwrap" id="memTop"></div>
+    </section>
+    </div>
+    <div class="view" id="jurRail" role="tabpanel" aria-labelledby="mtab-jur" hidden>
+      <section class="block" aria-label="Jurisdiction summary">
+        <p class="eyebrow" id="jurSumTitle">Summary</p>
+        <div id="jurSummary"></div>
+      </section>
+      <section class="block detail" aria-live="polite" id="jurDetail"></section>
+      <section class="block top">
+        <p class="eyebrow" id="jurListTitle">Districts</p>
+        <div class="tblwrap" id="jurList"></div>
+      </section>
+    </div>
+    <footer>ZIP boundaries and 2020 population: U.S. Census Bureau, <a href="https://tigerweb.geo.census.gov/" target="_blank" rel="noopener">TIGERweb</a> ZIP Code Tabulation Areas. ZIP codes used only for P.O. boxes or single buildings have no boundary and are listed above the table instead. State House (2026 lines) and congressional (120th Congress) boundaries: U.S. Census Bureau TIGERweb. City Council and School Board districts are drawn from Orleans Parish precincts. Member counts, incumbents and targets for jurisdictions come from the upcoming-races sheet.</footer>
+  </div>
+  <div class="main fixed" id="memMain">
+    <section class="block ctrl" id="zipControls" aria-label="Map settings">
+      <div class="ctrl-main"><p class="eyebrow">Members</p><div class="seg" role="group" aria-label="Members to count">
+        <button type="button" id="mm-migs" aria-pressed="true">In good standing (MIGS)</button>
+        <button type="button" id="mm-all" aria-pressed="false">MIGS + Lapsed</button>
+      </div></div>
+      <div class="ctrl-side"><p class="eyebrow">Show</p><div class="seg" role="group" aria-label="Measure">
+        <button type="button" id="mx-rate" aria-pressed="true">Per 10,000 residents</button>
+        <button type="button" id="mx-count" aria-pressed="false">Member count</button>
+      </div></div>
+      <div class="ctrl-full"><p class="eyebrow">Map view</p><div class="chips" role="group" aria-label="Map view">
+        <button type="button" class="chip dist" data-mv="nola" aria-pressed="true">New Orleans</button>
+        <button type="button" class="chip dist" data-mv="metro" aria-pressed="false">Metro area</button>
+        <button type="button" class="chip dist" data-mv="all" aria-pressed="false">All ZIP codes</button>
+      </div></div>
+    </section>
+    <div class="mapwrap" id="memMapwrap">
+      <svg id="mmap" role="img" aria-label="Map of membership by ZIP code"></svg>
+      <div class="maptitle"><div><div class="t" id="mmT"></div><div class="s" id="mmS"></div></div></div>
+      <div class="zoombar">
+        <button type="button" id="mzin" aria-label="Zoom in">+</button>
+        <button type="button" id="mzout" aria-label="Zoom out">−</button>
+        <button type="button" id="mzfit" aria-label="Reset the map view">⤢</button>
+      </div>
+      <div class="maplegend legend" aria-label="Legend">
+        <p class="eyebrow" id="mLegTitle">Members per 10,000 residents</p>
+        <svg id="mLegend" height="44"></svg>
+        <div class="nodata"><span class="swatch" style="background:var(--div-neg)"></span><span>Lowest</span><span class="swatch" style="background:var(--div-mid);margin-left:8px"></span><span>Median ZIP</span><span class="swatch" style="background:var(--div-pos);margin-left:8px"></span><span>Highest</span></div>
+      </div>
+      <div class="tip" id="mtip" hidden></div>
+    </div>
+    <section class="block ctrl" id="jurControls" aria-label="Jurisdiction settings" hidden>
+      <div class="ctrl-main"><label class="eyebrow" for="jurType" style="display:block">Jurisdiction</label>
+        <select class="up-sel" id="jurType">
+          <option value="house">2027 – State House</option>
+          <option value="dscc">2028 – DSCC</option>
+          <option value="sb">2028 – Orleans Parish School Board</option>
+          <option value="cong">2028 – US Congress</option>
+          <option value="council">2029 – City Council</option>
+        </select></div>
+      <div class="ctrl-side"><p class="eyebrow">Color by</p><div class="seg seg3" role="group" aria-label="Color by">
+        <button type="button" id="jm-migs" aria-pressed="true">MIGS</button>
+        <button type="button" id="jm-all" aria-pressed="false">MIGS + Lapsed</button>
+        <button type="button" id="jm-int" aria-pressed="false">Interested</button>
+      </div></div>
+      <div class="ctrl-full jrow">
+        <div><p class="eyebrow">Show</p><div class="chips" role="group" aria-label="Show districts">
+          <button type="button" class="chip dist" data-jf="all" aria-pressed="true">All districts</button>
+          <button type="button" class="chip dist" data-jf="target" aria-pressed="false">Targets</button>
+          <button type="button" class="chip dist" data-jf="dsa" aria-pressed="false">DSA-held</button>
+        </div></div>
+        <div><p class="eyebrow">Labels</p><div class="chips" role="group" aria-label="Labels">
+          <button type="button" class="chip dist" id="jTgtToggle" aria-pressed="false">Show target tags</button>
+        </div></div>
+        <div><p class="eyebrow">Map view</p><div class="chips" role="group" aria-label="Map view">
+          <button type="button" class="chip dist" data-jv="nola" aria-pressed="true">New Orleans</button>
+          <button type="button" class="chip dist" data-jv="all" aria-pressed="false">All districts</button>
+        </div></div>
+      </div>
+    </section>
+    <div class="mapwrap" id="jurMapwrap" hidden>
+      <svg id="jmap" role="img" aria-label="Map of districts colored by membership"></svg>
+      <div class="maptitle"><div><div class="t" id="jmT"></div><div class="s" id="jmS"></div></div></div>
+      <div class="zoombar">
+        <button type="button" id="jzin" aria-label="Zoom in">+</button>
+        <button type="button" id="jzout" aria-label="Zoom out">−</button>
+        <button type="button" id="jzfit" aria-label="Reset the map view">⤢</button>
+      </div>
+      <div class="maplegend legend" aria-label="Legend">
+        <p class="eyebrow" id="jLegTitle">Members in good standing per district</p>
+        <svg id="jLegend" height="44"></svg>
+        <div class="nodata"><svg class="star" aria-hidden="true"><use href="#star"/></svg><span>DSA-held seat</span><span id="jLegTgt" hidden style="display:contents"><span class="tgt" style="margin-left:10px">TARGET</span><span>Target</span></span></div>
+      </div>
+      <div class="tip" id="jtip" hidden></div>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="view-demographics" data-view="demographics" hidden>
+  <div class="rail">
+    <header>
+      <h1>Demographics</h1>
+      <p>Where the working class lives: renters, cost burden, low income, wage work, poverty and race</p>
+    </header>
+    <section class="block" aria-label="Orleans Parish overview">
+      <p class="eyebrow">The four parishes</p>
+      <div class="tblwrap" id="demoParish"></div>
+      <p class="note">American Community Survey 2020–2024 five-year estimates. Metro is the four parishes combined. The map and table compare places against each other; the parish or metro figure is the benchmark.</p>
+    </section>
+    <section class="block detail" aria-live="polite" id="demoDetail"></section>
+    <section class="block top">
+      <div class="trhead" style="margin-bottom:8px">
+        <p class="eyebrow" id="demoListTitle" style="margin:0">All areas</p>
+        <button type="button" class="copybtn" id="demoCsv">Copy CSV</button>
+      </div>
+      <div class="tblwrap dscroll" id="demoList"></div>
+      <textarea class="csvbox" id="demoCsvBox" hidden readonly aria-label="CSV of the table"></textarea>
+    </section>
+    <footer id="demoFooter">
+      <b>Sources.</b> U.S. Census Bureau, American Community Survey 2020–2024 5-year estimates, retrieved through <a href="https://censusreporter.org/" target="_blank" rel="noopener">Census Reporter</a>: tenure (B25003), housing costs as a share of income (B25140, B25070), household income (B19001, B19013), ratio of income to poverty (C17002), class of worker (B24080), race and Hispanic origin (B03002), employment status (B23025). Voter registration by party: Louisiana Secretary of State parish report of registered voters, Oct. 1, 2026 (Democrat, Republican, and no party plus other parties); registration is counted by precinct and shared out to tracts and ZIP codes by the share of each precinct's area they cover. Census tracts cover Orleans, Jefferson, St. Bernard and St. Tammany parishes; tract boundaries: Census TIGER 2024. ZIP codes are ZIP Code Tabulation Areas; State House figures are for the whole district, including any part outside Orleans Parish.
+      <br><br><b>Estimated districts.</b> City Council, School Board and congressional figures are for Orleans Parish only. Census does not publish City Council or School Board districts; their figures here add up census tracts, splitting tracts that cross a line by the share of their area on each side. Congressional figures are the Orleans Parish part of each district on the 120th Congress lines.
+      <br><br><b>Reading the numbers.</b> Tract estimates come from samples and carry wide margins of error; areas with fewer than 300 households are marked with a dot (•) and left out of the working-class index. The index compares each area with census tracts in its own parish, so a Jefferson tract scores against Jefferson tracts. The poverty line scales with household size, so "below 200% of poverty" already compares income to need for each family size. Wage and salary workers include private, nonprofit and government employees; self-employed includes owners of incorporated and unincorporated businesses.
+      <br><br><b>Other sources.</b> The Bureau of Labor Statistics publishes unemployment for Orleans Parish as a whole (<a href="https://www.bls.gov/lau/" target="_blank" rel="noopener">LAUS</a>), not for neighborhoods, so the unemployment rate here is the ACS five-year figure. <a href="https://www.datacenterresearch.org/" target="_blank" rel="noopener">The Data Center</a> publishes neighborhood profiles and maps of New Orleans that are useful alongside this page.
+    </footer>
+  </div>
+  <div class="main fixed" id="demoMain">
+    <section class="block ctrl" aria-label="Demographic map settings">
+      <div class="ctrl-main"><label class="eyebrow" for="demoMeasure" style="display:block">Measure</label>
+        <select class="up-sel" id="demoMeasure"></select></div>
+      <div class="ctrl-side"><label class="eyebrow" for="demoGeo" style="display:block">Areas</label>
+        <select class="up-sel" id="demoGeo">
+          <option value="tract">Census tracts</option>
+          <option value="zip">ZIP codes</option>
+          <option value="house">State House districts</option>
+          <option value="council">City Council districts (estimated)</option>
+          <option value="sb">School Board districts (estimated)</option>
+          <option value="cong">Congress, Orleans portion (estimated)</option>
+        </select></div>
+      <div class="ctrl-full jrow">
+        <div id="demoParishCtl"><label class="eyebrow" for="demoParishSel" style="display:block">Parish</label>
+          <select class="up-sel sm" id="demoParishSel">
+            <option value="all">All four parishes</option>
+            <option value="O">Orleans</option>
+            <option value="J">Jefferson</option>
+            <option value="B">St. Bernard</option>
+            <option value="T">St. Tammany</option>
+          </select></div>
+        <div><p class="eyebrow">Map view</p><div class="chips" role="group" aria-label="Map view">
+          <button type="button" class="chip dist" data-dv="nola" aria-pressed="true">New Orleans</button>
+          <button type="button" class="chip dist" data-dv="all" aria-pressed="false">All areas</button>
+        </div></div>
+      </div>
+    </section>
+    <div class="mapwrap" id="demoMapwrap">
+      <svg id="dmap" role="img" aria-label="Map of demographic measures"></svg>
+      <div class="maptitle"><div><div class="t" id="dmT"></div><div class="s" id="dmS"></div></div></div>
+      <div class="zoombar">
+        <button type="button" id="dzin" aria-label="Zoom in">+</button>
+        <button type="button" id="dzout" aria-label="Zoom out">−</button>
+        <button type="button" id="dzfit" aria-label="Reset the map view">⤢</button>
+      </div>
+      <div class="maplegend legend" aria-label="Legend">
+        <p class="eyebrow" id="dLegTitle"></p>
+        <svg id="dLegend" height="44"></svg>
+        <div class="nodata"><span class="swatch" style="background:var(--div-pos)"></span><span id="dLegPos">More working-class</span><span class="swatch" style="margin-left:8px"></span><span>No data</span></div>
+      </div>
+      <div class="tip" id="dtip" hidden></div>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="view-summary" data-view="summary" hidden>
+  <div class="rail">
+    <header>
+      <h1>Summary</h1>
+      <p>Working class, DSA vote and membership, side by side</p>
+      <div class="tabs" role="tablist" aria-label="Summary view">
+        <button type="button" role="tab" id="stab-run" aria-controls="runRail" aria-selected="true">Where to run</button>
+        <button type="button" role="tab" id="stab-act" aria-controls="actRail" aria-selected="false">Where to intervene</button>
+      </div>
+    </header>
+    <div class="view" id="runRail" role="tabpanel" aria-labelledby="stab-run">
+      <section class="block" aria-label="Recommended races">
+        <p class="eyebrow" id="runRecTitle">Best districts to run in</p>
+        <div id="runRecs"></div>
+      </section>
+      <section class="block detail" aria-live="polite" id="runDetail"></section>
+      <section class="block top">
+        <div class="trhead" style="margin-bottom:8px">
+          <p class="eyebrow" id="runListTitle" style="margin:0">All districts</p>
+          <button type="button" class="copybtn" id="runCsv">Copy CSV</button>
+        </div>
+        <div class="tblwrap" id="runList"></div>
+        <textarea class="csvbox" id="runCsvBox" hidden readonly aria-label="CSV of the table"></textarea>
+      </section>
+    </div>
+    <div class="view" id="actRail" role="tabpanel" aria-labelledby="stab-act" hidden>
+      <section class="block" aria-label="Intervention types">
+        <p class="eyebrow">Precincts that need attention</p>
+        <div id="actCats"></div>
+      </section>
+      <section class="block" aria-label="Compare two scores">
+        <div class="trhead" style="margin-bottom:6px">
+          <p class="eyebrow" style="margin:0">Compare two scores</p>
+          <button type="button" class="copybtn" id="scClear" hidden>Clear selection</button>
+        </div>
+        <div class="scax">
+          <label>Across <select class="up-sel sm" id="scX"><option value="wc">Working class</option><option value="sup">DSA vote</option><option value="mem">Membership</option></select></label>
+          <label>Up <select class="up-sel sm" id="scY"><option value="wc">Working class</option><option value="sup" selected>DSA vote</option><option value="mem">Membership</option></select></label>
+        </div>
+        <svg id="scatter" role="img" aria-label="Scatter plot of precinct scores"></svg>
+        <p class="note" id="scNote">Drag a box on the chart to select precincts; the map and table follow your selection.</p>
+      </section>
+      <section class="block detail" aria-live="polite" id="actDetail"></section>
+      <section class="block top">
+        <div class="trhead" style="margin-bottom:8px">
+          <p class="eyebrow" style="margin:0">Where they cluster</p>
+          <select class="up-sel sm" id="actGroup" aria-label="Group precincts by">
+            <option value="c">by City Council district</option>
+            <option value="h">by State House district</option>
+            <option value="s">by School Board district</option>
+            <option value="p">by parish</option>
+          </select>
+        </div>
+        <div class="tblwrap" id="actClusters"></div>
+      </section>
+      <section class="block top">
+        <p class="eyebrow" id="actListTitle">Precincts</p>
+        <div class="tblwrap dscroll" id="actList"><table class="jl tf"><thead>
+          <tr><th><button type="button" class="tfs" data-k="p">Precinct</button></th>
+            <th title="Working class · DSA vote · Membership"><span class="tfsg"><button type="button" class="tfs" data-k="wc">WC</button> · <button type="button" class="tfs" data-k="sup">Vote</button> · <button type="button" class="tfs" data-k="mem">Mem.</button></span></th>
+            <th><button type="button" class="tfs" data-k="loc">Council / parish</button></th></tr>
+        </thead><tbody id="actBody"></tbody></table></div>
+      </section>
+    </div>
+    <footer><b>How the scores work.</b> Working class and DSA vote are turned into percentiles against the other precincts in the same parish, so 50 is a typical precinct for its parish. Membership is ranked across all four parishes together, so a district with a handful of members scores low wherever it is. A district that crosses parish lines averages its precincts' percentiles. City Council and School Board are Orleans-only. Suburban precincts only have results for the 2022–2026 PSC, BESE, Congress and DSCC races (plus the 2026 Abita Springs mayor's race), so their DSA vote scores rest on fewer candidates.
+      <b>Working class</b> is the Demographics working-class index for the census tracts each precinct overlaps.
+      <b>DSA vote</b> is the Trends &amp; data precinct score: how far DSA candidates (or DSA + recommended) ran above their own citywide average there.
+      <b>Membership</b> is members in good standing per 10,000 residents. Members are only known by ZIP code, so a precinct takes the rate of its ZIP. District scores use the actual member counts per district from the upcoming-races sheet, except Congress, which uses precincts.
+      The run score is the plain average of the three. It is a starting point for a conversation, not a verdict: it can't see candidates, money, or the incumbent.</footer>
+  </div>
+  <div class="main fixed" id="sumMain">
+    <section class="block ctrl" id="runControls" aria-label="Where to run settings">
+      <div class="ctrl-main"><label class="eyebrow" for="runElection" style="display:block">Upcoming race</label>
+        <select class="up-sel" id="runElection">
+          <option value="house">2027 – State House</option>
+          <option value="dscc">2028 – DSCC</option>
+          <option value="sb">2028 – Orleans Parish School Board</option>
+          <option value="cong">2028 – US Congress</option>
+          <option value="council">2029 – City Council</option>
+        </select></div>
+      <div class="ctrl-side"><label class="eyebrow" for="runColor" style="display:block">Color map by</label>
+        <select class="up-sel" id="runColor">
+          <option value="score">Run score (all three)</option>
+          <option value="wc">Working class</option>
+          <option value="sup">DSA vote</option>
+          <option value="mem">Membership</option>
+        </select></div>
+      <div class="ctrl-full jrow">
+        <div><p class="eyebrow">DSA vote counts</p><div class="seg" role="group" aria-label="Candidates used for the vote score">
+          <button type="button" data-sg="dsa" aria-pressed="true">DSA endorsed</button>
+          <button type="button" data-sg="all" aria-pressed="false">DSA + Recommended</button>
+        </div></div>
+        <div><p class="eyebrow">Labels</p><div class="chips" role="group" aria-label="Labels">
+          <button type="button" class="chip dist" id="runTgt" aria-pressed="false">Show target tags</button>
+        </div></div>
+      </div>
+      <div class="ctrl-full" id="runWeightRow" hidden><p class="eyebrow" title="DSCC is a Democratic party race, so all-Democrat races say the most">Past races count</p><div class="seg" role="group" aria-label="How past races count" style="max-width:520px">
+        <button type="button" data-rdw="1" aria-pressed="true" title="D v D ×1, Mixed ×½, D v R ×¼, measures ×¼">Weighted: Democratic primaries count most</button>
+        <button type="button" data-rdw="0" aria-pressed="false">Every race counts the same</button>
+      </div></div>
+    </section>
+    <section class="block ctrl" id="actControls" aria-label="Where to intervene settings" hidden>
+      <div class="ctrl-full"><p class="eyebrow">Show</p><div class="chips" role="group" aria-label="Intervention type">
+        <button type="button" class="chip dist" data-af="all" aria-pressed="true">All types</button>
+        <button type="button" class="chip dist" data-af="E" aria-pressed="false"><span class="cdot" style="background:var(--c-e)"></span>More events</button>
+        <button type="button" class="chip dist" data-af="R" aria-pressed="false"><span class="cdot" style="background:var(--c-r)"></span>More recruitment</button>
+        <button type="button" class="chip dist" data-af="I" aria-pressed="false"><span class="cdot" style="background:var(--c-i)"></span>Social inquiry</button>
+        <button type="button" class="chip dist" data-af="any" aria-pressed="false">Every precinct</button>
+      </div></div>
+      <div class="ctrl-full jrow">
+        <div id="actScopeCtl" hidden><p class="eyebrow">Percentiles</p><div class="seg" role="group" aria-label="Percentiles">
+          <button type="button" data-ps="all" aria-pressed="true" title="Every precinct ranked against all four parishes">Across all four parishes</button>
+          <button type="button" data-ps="parish" aria-pressed="false" title="Each precinct ranked against its own parish">Within each parish</button>
+        </div></div>
+        <div><label class="eyebrow" for="actColor" style="display:block">Color map by</label>
+          <select class="up-sel sm" id="actColor">
+            <option value="type">Intervention type</option>
+            <option value="wc">Working class</option>
+            <option value="sup">DSA vote</option>
+            <option value="mem">Membership</option>
+            <option value="gE">Events gap: working class − avg(vote, members)</option>
+            <option value="gR">Recruitment gap: avg(working class, vote) − members</option>
+            <option value="gI">Inquiry gap: avg(working class, members) − vote</option>
+          </select></div>
+        <div><p class="eyebrow">DSA vote counts</p><div class="seg" role="group" aria-label="Candidates used for the vote score">
+          <button type="button" data-sg="dsa" aria-pressed="true">DSA endorsed</button>
+          <button type="button" data-sg="all" aria-pressed="false">DSA + Recommended</button>
+        </div></div>
+      </div>
+    </section>
+    <div class="mapwrap" id="sumMapwrap">
+      <svg id="smap" role="img" aria-label="Summary map"></svg>
+      <div class="maptitle"><div><div class="t" id="smT"></div><div class="s" id="smS"></div></div></div>
+      <div class="zoombar">
+        <button type="button" id="szin" aria-label="Zoom in">+</button>
+        <button type="button" id="szout" aria-label="Zoom out">−</button>
+        <button type="button" id="szfit" aria-label="Reset the map view">⤢</button>
+      </div>
+      <div class="maplegend legend" aria-label="Legend" id="sLegBox">
+        <p class="eyebrow" id="sLegTitle"></p>
+        <svg id="sLegend" height="44"></svg>
+        <div class="nodata" id="sLegNote"></div>
+      </div>
+      <div class="tip" id="stip" hidden></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="js/load-data.js"></script>
+</body>
+</html>
