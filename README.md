@@ -17,8 +17,6 @@ It is a static site: plain HTML, CSS and JavaScript, plus data files. There is n
 
 ## Viewing it
 
-**On GitHub Pages:** push the repo to GitHub, then go to **Settings → Pages**. Set **Source** to *Deploy from a branch*, pick your branch (e.g. `main`) and the `/ (root)` folder, then save. The site will be at `https://<your-user>.github.io/<repo-name>/` within a minute or two.
-
 **On your computer:** the page loads its data with `fetch()`, which browsers block for files opened straight from disk. Start a small web server in the project folder instead:
 
 ```sh
@@ -137,7 +135,3 @@ Colors, fonts and spacing are CSS variables at the top of `css/styles.css`, with
   - Louisiana Legislature 2024 precinct shapefile: suburban precincts.
   - City Council and School Board districts are built from Orleans precincts.
 - **Members, incumbents and targets:** New Orleans DSA's upcoming-races sheet.
-
-## A note on privacy
-
-`data/members/` and `data/upcoming/districts.json` contain member counts by ZIP and district, plus DSA's targets. On GitHub Pages, a **public** repository makes these visible to anyone. If they shouldn't be public, keep the repository private. Pages for private repos requires a paid GitHub plan; otherwise use the standalone file and share it privately.
