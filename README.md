@@ -13,7 +13,7 @@ It is a static site: plain HTML, CSS and JavaScript, plus data files. There is n
 | **Election Data → Trends & data** | Precinct rankings across all candidates, filterable by district; CSV export |
 | **Demographics** | Census measures (renters, cost burden, income, poverty, wage workers, race), a working-class index, and voter registration by party |
 | **Membership** | DSA members by ZIP code and by upcoming-race district, with incumbents, open seats, DSA-held seats and targets |
-| **Summary** | *Where to run* (scores districts) and *Where to intervene* (flags precincts for events, recruitment or social inquiry) |
+| **Summary** | *Where to run* (scores districts, with **Export Dossier**: a Discourse-ready markdown dossier for the selected district) and *Where to intervene* (flags precincts for events, recruitment or social inquiry) |
 
 ## Viewing it
 

@@ -1981,7 +1981,8 @@ function renderRun() {
       ${fbar("DSA vote", sel.sup, sel.supPts != null ? `${g === "dsa" ? "DSA" : "DSA + recommended"} candidates ran ${pts(sel.supPts)} pts versus their citywide averages, on average across these precincts` : "")}
       ${fbar("Membership", sel.mem, memX)}
       <p class="advice">${esc(runWhy(sel))[0].toUpperCase() + esc(runWhy(sel)).slice(1)}.${cats.E + cats.R + cats.I ? ` Inside it: ${[["E", "need more events"], ["R", "need more recruitment"], ["I", "need social inquiry"]].filter(([c]) => cats[c]).map(([c, t]) => `${cats[c]} precinct${cats[c] > 1 ? "s" : ""} ${t}`).join(", ")} (see Where to intervene).` : ""}</p>
-      <button type="button" class="jbtn" id="runOpen" style="margin-top:10px">See past results in this district</button>`;
+      <div class="btnrow"><button type="button" class="jbtn" id="runOpen">See past results in this district</button><button type="button" class="jbtn" id="runDossier">Export Dossier</button></div>`;
+    document.getElementById("runDossier").addEventListener("click", () => openDossier(e, sel));
     document.getElementById("runOpen").addEventListener("click", () => {
       state.up.e = JT[SR[e].jt].up; state.up.d = sel.d; saveUp();
       document.getElementById("upElection").value = state.up.e;
@@ -2319,3 +2320,207 @@ new ResizeObserver(() => { if (state.tab === "trends" || currentView !== "electi
 const recolor = () => currentView === "demographics" ? drender() : currentView === "summary" ? renderSum() : render(false);
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", recolor);
 new MutationObserver(recolor).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+/* ---- Export dossier (Where to run) ----
+   Builds a Discourse-flavored markdown dossier for the selected district, following the
+   chapter's dossier template. Fields the data can't fill are left blank for organizers. */
+const PARTY_AB = { DEM: "D", REP: "R", NOPTY: "NP", LBT: "L", GRN: "G", IND: "I", OTHER: "Other" };
+const partyAb = p => PARTY_AB[p] || p || "";
+const incParty = p => p === "D" ? "D" : p === "R" ? "R" : "party unknown";
+const mdEsc = s => String(s).replace(/\|/g, "\\|");
+const pc = (a, b) => b > 0 ? (a / b * 100).toFixed(1) + "%" : "–";
+const OFFICE = { house: "State Representative", dscc: "DSCC member", cong: "U.S. Representative", council: "City Councilmember", sb: "School Board member" };
+
+function dossierMarkdown(e, x) {
+  const S = SR[e], T = JT[S.jt], name = sumName(e, x.d), rec = x.rec || {};
+  const psIds = x.ps.map(r => r.p), psSet = new Set(psIds);
+  const parishes = [...new Set(psIds.map(parishOf))];
+  const unit = dUnits(S.geo).find(u => u.id === x.d), row = unit ? unit.row : null;
+  const L = [];
+  const today = new Date().toISOString().slice(0, 10);
+
+  // ---------- header ----------
+  L.push(`# ${name} Dossier`, "", "\\[INSERT PICTURE OF DISTRICT\\]", "",
+    `_Generated ${today} from New Orleans DSA Electoral Analyses. Blank fields aren't in that dataset yet._`, "", "---", "");
+  if (e === "dscc") {
+    L.push("### Current Incumbents:", "");
+    Object.entries(rec.offices || {}).forEach(([o, v]) => L.push(`* Office ${o}: [Name] (${incParty(v.party)})${v.dsa === "Y" ? " · DSA" : v.dsa === "Former" ? " · former DSA" : ""}${v.tl ? " · term-limited" : ""}${v.target ? " · DSA target" : ""}`));
+    L.push("");
+  } else {
+    const f = x.flags || {};
+    L.push(`### Current Incumbent: [Name] (${incParty(rec.party)})${f.dsa ? " · DSA" : f.former ? " · former DSA" : ""}`, "");
+    L.push(`Term Limit Year: ${f.tl ? (f.why === "term-limited" ? `term-limited; open seat in ${T.year}` : `open seat in ${T.year} (${f.why})`) : ""}`, "");
+  }
+  L.push(`Next election: ${T.year}${x.flags && x.flags.target ? " · **DSA target**" : ""}`, "");
+
+  // ---------- demographics ----------
+  L.push("## Demographics", "");
+  if (row) {
+    const r = row, bits = [];
+    const blk = pctOf(r.nhBlack, r.raceTot), wht = pctOf(r.nhWhite, r.raceTot), his = pctOf(r.hisp, r.raceTot);
+    const top = [["Black", blk], ["white", wht], ["Hispanic or Latino", his]].filter(a => a[1] != null).sort((a, b) => b[1] - a[1])[0];
+    if (top) bits.push(`${name} is ${(top[1] * 100).toFixed(0)}% ${top[0]}`);
+    const rent = pctOf(r.renter, r.hhTot); if (rent != null) bits.push(`${(rent * 100).toFixed(0)}% of households rent`);
+    const p200 = pctOf(r.below200, r.povTot); if (p200 != null) bits.push(`${(p200 * 100).toFixed(0)}% of residents live below twice the poverty line`);
+    const wcTxt = unit && unit.index != null ? ` Its working-class index is ${unit.index.toFixed(0)} (50 is a typical census tract in ${PCODE[unit.par || "O"]} Parish).` : "";
+    L.push(bits.join(", ") + "." + wcTxt + (S.geo === "cong" ? " Figures cover only the Orleans Parish part of the district." : DG[S.geo].est ? " District figures are estimated from the census tracts it overlaps." : ""), "");
+  } else L.push("_No census figures for this district._", "");
+  L.push(`[details="Demographic Details"]`);
+  const R = row || {};
+  const pcR = (a, b) => row ? pc(a, b) : "";
+  L.push(`* Total Population: ${row ? fmt(Math.round(R.pop)) + (S.geo === "cong" ? " (Orleans Parish part only)" : DG[S.geo].est ? " (estimated)" : "") : ""}`, "",
+    "  ^[ACS 2020–2024 5-year estimates (U.S. Census Bureau, via Census Reporter). Voter registration: Louisiana Secretary of State, Oct. 1, 2026. Members: chapter roster, " + (MEM.asOf || "") + ".]", "");
+  L.push(`* Income:`,
+    `  * Median household income: ${row && R.medInc > 0 ? "$" + fmt(Math.round(R.medInc)) : "not available"}`,
+    `  * Households under $50,000: ${pcR(R.under50k, R.incTot)}`,
+    `  * Below the poverty line: ${pcR(R.below100, R.povTot)}`,
+    `  * Below 200% of the poverty line: ${pcR(R.below200, R.povTot)}`,
+    `  * Wage and salary workers: ${pcR(R.wage, R.empTot)} of employed residents`,
+    `  * Self-employed / business owners: ${pcR(R.selfEmp, R.empTot)}`,
+    `  * Unemployment rate: ${pcR(R.unemp, R.lf)}`, "");
+  L.push(`* Total DSA Members in District: ${rec.migs != null ? `${fmt(rec.migs)} in good standing · ${fmt(rec.all)} including lapsed${rec.int != null ? ` · ${fmt(rec.int)} interested` : ""}` : x.memRate != null ? `about ${x.memRate.toFixed(1)} per 10,000 residents (estimated from ZIP codes)` : ""}`, "");
+  L.push("* Age Brackets", "", "  * 18-25: %", "  * 26-35: %", "  * 36-45: %", "  * 46-55: %", "  * 56-65: %", "  * 65+", "");
+  L.push("* Race Percentage", "",
+    `  * Black: ${pcR(R.nhBlack, R.raceTot)}`,
+    `  * White: ${pcR(R.nhWhite, R.raceTot)}`,
+    `  * Hispanic or Latino: ${pcR(R.hisp, R.raceTot)}`,
+    `  * Asian: ${pcR(R.nhAsian, R.raceTot)}`,
+    `  * Indigenous, multiracial and other: ${row ? pc(R.raceTot - R.nhBlack - R.nhWhite - R.hisp - R.nhAsian, R.raceTot) : ""}`, "");
+  L.push("* Level of Education", "", "  * No High School Diploma", "  * High School Graduate", "  * Some College", "  * Bachelors", "  * Advanced Degree", "");
+  L.push("* Marital Status", "", "  * married", "  * single", "");
+  L.push("* Parents", "", "  * 0 kids", "  * 1-2 kids", "  * 3-4 kids", "  * 5+ kids", "");
+  L.push("* Housing", "",
+    `  * Homeowner v Renter: ${row ? `${pc(R.hhTot - R.renter, R.hhTot)} own · ${pc(R.renter, R.hhTot)} rent` : ""}`,
+    `  * Households paying 30%+ of income on housing: ${pcR(R.burd30, R.burdTot)}`,
+    `  * Renters paying 30%+ of income on rent: ${pcR(R.renterBurd30, R.renterTot)}`, "");
+  L.push("[/details]", "", "---", "");
+
+  // ---------- representation ----------
+  // overlapping districts, from the precincts this district contains
+  const over = k => { const c = new Map(); psIds.forEach(p => { const v = (DIST[p] || {})[k]; if (v) c.set(v, (c.get(v) || 0) + 1); }); return [...c].sort((a, b) => b[1] - a[1]); };
+  const share = n => n === psIds.length ? "" : ` (${n} of ${psIds.length} precincts)`;
+  const repLine = (jt, d, n, office, area) => {
+    const r = JUR[jt] && JUR[jt][d], f = r ? jFlags(jt, d) : {};
+    const notes = [f.dsa && "DSA-held", f.former && "former DSA", f.target && "DSA target", f.tl && (f.why === "term-limited" ? "term-limited" : "open seat")].filter(Boolean);
+    return `* [Name] (${r ? incParty(r.party) : "?"}) - ${office} - ${area}${share(n)}` + (notes.length ? `\n  * Special Note: ${notes.join(", ")}` : "");
+  };
+  L.push("## Representation", "", "Other offices representing this district. Fill in names and call out potential allies or obstacles.", "");
+  L.push(`[details="List of Representation"]`, "### National", "");
+  if (e === "cong") L.push(repLine("cong", x.d, psIds.length, "U.S. Representative", `LA-0${x.d}`));
+  else over("g").forEach(([d, n]) => L.push(repLine("cong", d, n, "U.S. Representative", `LA-0${d}`)));
+  L.push("* [Name] (party) - U.S. Senator - Louisiana", "* [Name] (party) - U.S. Senator - Louisiana", "", "### State", "");
+  if (e === "house") L.push(repLine("house", x.d, psIds.length, "State Representative", `House District ${x.d}`));
+  else over("h").forEach(([d, n]) => L.push(repLine("house", d, n, "State Representative", `House District ${d}`)));
+  L.push("* Senator", "* BESE", "* PSC", "", "### County", "");
+  L.push(parishes.length === 1 && parishes[0] === "Orleans" ? "* Orleans Parish is governed by the New Orleans City Council (see Local)" : `* Parish council${parishes.filter(p => p !== "Orleans").length > 1 ? "s" : ""}: ${listAnd(parishes.filter(p => p !== "Orleans"))} Parish${parishes.filter(p => p !== "Orleans").length > 1 ? "es" : ""}`);
+  L.push("* other parish offices (assessor, sheriff, clerk)", "", "### Local", "");
+  if (parishes.includes("Orleans")) {
+    if (e === "council") L.push(repLine("council", x.d, psIds.length, "City Councilmember", `District ${x.d}`));
+    else over("c").forEach(([d, n]) => L.push(repLine("council", d, n, "City Councilmember", `District ${d}`)));
+    ["AL1", "AL2"].forEach(d => L.push(repLine("council", d, psIds.length, "City Councilmember", `At-Large, Division ${d.slice(2)}`)));
+    if (e === "sb") L.push(repLine("sb", x.d, psIds.length, "School Board member", `District ${x.d}`));
+    else over("s").forEach(([d, n]) => L.push(repLine("sb", d, n, "School Board member", `District ${d}`)));
+  } else L.push("* City Council", "* School Board");
+  L.push("* Judges", "", "### Party", "", "* OPDEC");
+  const dsccDs = e === "house" || e === "dscc" ? [[x.d, psIds.length]] : over("h");
+  dsccDs.forEach(([d, n]) => { const r = JUR.dscc && JUR.dscc[d]; if (!r) return; Object.entries(r.offices).forEach(([o, v]) => L.push(`* [Name] (${incParty(v.party)}) - DSCC, Office ${o} - House District ${d}${share(n)}${v.dsa === "Y" ? "\n  * Special Note: DSA-held" : ""}`)); });
+  L.push("", "[/details]", "", "---", "");
+
+  // ---------- institutional power map (left for organizers) ----------
+  L.push("## Institutional Power map", "",
+    "Important institutional players in the district: businesses, neighborhood associations, churches, non-profits, unions, and individuals such as university presidents, pastors or media figures.", "",
+    `[details="List of Institutional Players"]`, "### Potential Friendly Institutions", "", "* Institution Name - Members number", "  * Some details", "",
+    "### Potential Persuadable Institutions", "", "* one", "  * details", "", "### Potential Opposition Institutions", "", "* One", "  * details", "",
+    "### Oppositional Institutions", "", "* AIPAC", "  * details", "", "[/details]", "", "---", "");
+
+  // ---------- DSA outlook (from the Summary scores) ----------
+  const cats = { E: [], R: [], I: [] };
+  x.ps.forEach(r => catsOf(r, state.sum.cut).forEach(c => cats[c].push(pName(r.p))));
+  const all = sumDistricts(e, state.sum.g).filter(z => z.score != null).sort((a, b) => b.score - a.score);
+  const rank = all.findIndex(z => z.d === x.d) + 1;
+  L.push("## DSA Outlook", "",
+    `Run score ${ordPct(x.score)}${rank ? ` (#${rank} of ${all.length} ${T.label} districts)` : ""}: ${runWhy(x)}. Percentiles: working class and DSA vote against precincts in the same parish, membership across all four parishes.`, "",
+    `[details="Score Details"]`,
+    `* Working class: ${ordPct(x.wc)}`,
+    `* DSA vote: ${ordPct(x.sup)}${x.supPts != null ? ` (${state.sum.g === "dsa" ? "DSA" : "DSA + recommended"} candidates ran ${pts(x.supPts)} pts versus their overall averages here)` : ""}`,
+    `* Membership: ${ordPct(x.mem)}${x.memRate != null ? ` (${x.memRate.toFixed(1)} members per 10,000 residents)` : ""}`);
+  Object.entries(cats).forEach(([c, ps]) => { if (ps.length) L.push(`* ${CATS[c].label} (${ps.length}): ${ps.join(", ")}`); });
+  L.push("", "[/details]", "", "---", "");
+
+  // ---------- electoral history ----------
+  L.push("## Electoral History", "",
+    "Previous races in this district's precincts, newest first. Vote totals are election-day precinct votes; early and mail votes are reported parish-wide and can't be placed in a district. Turnout counts all voters, early included, where the state reports it.", "",
+    `[details="Electoral History Details"]`);
+  if (row && row.rT) L.push(`Total Registered Voters in District: ${fmt(Math.round(row.rT))} (Oct. 1, 2026)`,
+    `Voter Breakdown: ${pc(row.rD, row.rT)} D / ${pc(row.rR, row.rT)} R / ${pc(row.rO, row.rT)} no party or other`);
+  else L.push("Total Registered Voters in District:", "Voter Breakdown: R/D/No party%");
+  L.push(`DSA membership: ${rec.migs != null ? `${fmt(rec.migs)} in good standing${row && row.rT ? ` (${(rec.migs / row.rT * 100).toFixed(2)}% of registered voters)` : ""}` : ""}`, "");
+  const candOf = new Map(CANDIDATES.map(c => [c.race + "|" + c.choice, c]));
+  const rs = DATA.races.map(rc => ({ rc, ids: Object.keys(rc.precincts).filter(p => psSet.has(p)) })).filter(o => o.ids.length)
+    .sort((a, b) => b.rc.date.localeCompare(a.rc.date) || a.rc.title.localeCompare(b.rc.title));
+  if (!rs.length) L.push("_No races in this dataset cover this district's precincts._", "");
+  rs.forEach(({ rc, ids }) => {
+    const n = rc.choices.length, tot = Array(n).fill(0); let reg = 0, voted = 0;
+    ids.forEach(p => { const v = rc.precincts[p]; reg += v[0]; voted += v[1]; for (let i = 0; i < n; i++) tot[i] += v[2 + i]; });
+    const sum = d3.sum(tot);
+    const head = rc.choices.map(c => { const k = candOf.get(rc.id + "|" + c.id); return mdEsc(`${k && k.star ? "★ " : ""}${c.name}${c.party ? ` (${partyAb(c.party)})` : ""}${k && !k.star ? " (recommended)" : ""}`); });
+    const allPs = Object.keys(rc.precincts).length;
+    L.push(`**${mdEsc(rc.title)} – ${dateFmt(new Date(rc.date + "T12:00:00Z"))}** · ${raceType(rc).label}${ids.length < psIds.length ? ` · ${ids.length} of ${psIds.length} district precincts voted in this race` : ""}`, "",
+      `|  | ${head.join(" | ")} | Total |`,
+      `|${"----|".repeat(n + 2)}`,
+      `| Vote Total | ${tot.map(fmt).join(" | ")} | ${fmt(sum)} |`,
+      `| Vote % | ${tot.map(v => pc(v, sum)).join(" | ")} | 100% |`,
+      `| Turnout % | ${Array(n).fill("").join(" | ")} | ${voted ? pc(voted, reg) : "not reported"} |`);
+    // how the DSA candidate did here versus everywhere the race was held (election-day votes on both sides)
+    rc.choices.forEach((c, i) => {
+      const k = candOf.get(rc.id + "|" + c.id); if (!k || !sum) return;
+      const allTot = d3.sum(Object.values(rc.precincts), v => v[2 + i]), allSum = d3.sum(Object.values(rc.precincts), v => d3.sum(v.slice(2)));
+      L.push("", `${k.star ? "★ " : ""}${c.name}: ${pc(tot[i], sum)} here vs. ${pc(allTot, allSum)} across the whole race (election-day votes).`);
+    });
+    L.push("");
+  });
+  L.push("Presidential Primary", "", "|  | Candidate A | Candidate B | Candidate C | Total |", "|----|----|----|----|----|", "| Vote Total |  |  |  |  |", "| Vote % |  |  |  |  |", "| Turnout % |  |  |  |  |", "");
+  L.push("[/details]", "", "---", "");
+
+  // ---------- financial history (left for organizers) ----------
+  const fin = t => [t, "", "|  | Candidate A (winner) | Candidate B (runner-up) | Candidate C (3rd Place) | Total/Avg |", "|----|----|----|----|----|",
+    "| $ Amount Raised |  |  |  | (total) |", "| $ Amount Spent |  |  |  | (total) |", "| Vote Total |  |  |  | (avg) |", "| $/Vote |  |  |  | (avg) |", ""];
+  L.push("## Financial History", "", "How much money was spent in previous races, and who the big donors are. Campaign finance reports: Louisiana Board of Ethics, https://ethics.la.gov/", "",
+    `[details="Financial History Details"]`, "* Avg winning amount spent:", "* $/Vote Cost:", "* Large Donors in this Race", "  * Donor 1 ($amount)", "  * Donor 2", "  * Donor 3", "",
+    ...fin("Most Recent Race"), ...fin("Next most Recent Race"), ...fin("Most recent race after that"), "[/details]", "");
+  return L.join("\n");
+}
+
+async function copyText(text, ta) {
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+  try { ta.focus(); ta.select(); return document.execCommand("copy"); } catch (e) { return false; }
+}
+function openDossier(e, x) {
+  const md = dossierMarkdown(e, x);
+  let ov = document.getElementById("dossierPop");
+  if (!ov) {
+    ov = document.createElement("div"); ov.id = "dossierPop"; ov.className = "pop-ov";
+    ov.innerHTML = `<div class="pop" role="dialog" aria-modal="true" aria-labelledby="dossierT">
+      <button type="button" class="navclose" id="dossierX" aria-label="Close">×</button>
+      <p class="eyebrow">Export dossier</p><h2 id="dossierT">Generated Dossier for selected office</h2>
+      <p class="sub" id="dossierS"></p>
+      <textarea id="dossierMd" readonly spellcheck="false" aria-label="Dossier markdown"></textarea>
+      <div class="pop-act"><button type="button" class="jbtn primary" id="dossierCopy">Copy to clipboard</button><span id="dossierMsg" role="status"></span></div>
+    </div>`;
+    document.body.appendChild(ov);
+    const close = () => { ov.hidden = true; if (ov._ret) ov._ret.focus(); };
+    ov.addEventListener("click", ev => { if (ev.target === ov) close(); });
+    ov.querySelector("#dossierX").addEventListener("click", close);
+    ov.addEventListener("keydown", ev => { if (ev.key === "Escape") close(); });
+    ov.querySelector("#dossierCopy").addEventListener("click", async () => {
+      const ok = await copyText(ov._md, ov.querySelector("#dossierMd"));
+      ov.querySelector("#dossierMsg").textContent = ok ? "Copied. Paste it into a new Discourse post." : "Couldn't copy automatically: select the text above and copy it.";
+    });
+  }
+  ov._md = md; ov._ret = document.activeElement;
+  ov.querySelector("#dossierS").textContent = `${sumName(e, x.d)} · ${JT[SR[e].jt].year} ${JT[SR[e].jt].label} · Markdown for Discourse`;
+  ov.querySelector("#dossierMd").value = md;
+  ov.querySelector("#dossierMsg").textContent = "";
+  ov.hidden = false;
+  ov.querySelector("#dossierCopy").focus();
+}
